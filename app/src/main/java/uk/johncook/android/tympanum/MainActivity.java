@@ -76,8 +76,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                 super.onLocationAvailability(locationAvailability);
                 if (locationAvailability.isLocationAvailable()) {
                     Toast.makeText(MainActivity.this, "Location is updating.", Toast.LENGTH_SHORT).show();
-                }
-                else {
+                } else {
                     Toast.makeText(MainActivity.this, "Location is not updating.", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -88,8 +87,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     @Override
     protected void onResume() {
         super.onResume();
-        if (requestingLocationUpdates)
-        {
+        if (requestingLocationUpdates) {
             startLocationUpdates();
         }
     }
@@ -112,7 +110,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             String longitude = Location.convert(location.getLongitude(), Location.FORMAT_SECONDS);
             String meridianHemisphere = longitude.startsWith("-") ? "W" : "E";
             double[] longitudeDMS = GetCoordinates(longitude);
-            char maidenheadFieldLongitude = (char) ((meridianHemisphere.equals("W") && (longitudeDMS[0] > -180 || longitudeDMS[1] > 0 || longitudeDMS[2] > 0) ? (int) longitudeDMS[0] + 179 : (int) longitudeDMS[0] + 180) / 20 + 65);
+            char maidenheadFieldLongitude = (char) ((meridianHemisphere.equals("W") && (longitudeDMS[0] > -180 || longitudeDMS[1] > 0 || longitudeDMS[2] > 0) ? (int) longitudeDMS[0] + 179 : (int) longitudeDMS[0] + 180 % 360) / 20 + 65);
             int maidenheadSquareLongitude = (int) (meridianHemisphere.equals("W") && (longitudeDMS[0] > -180 || longitudeDMS[1] > 0 || longitudeDMS[2] > 0) ? 9 - (longitudeDMS[0] % 20 / 2 * 2) : longitudeDMS[0] % 20 / 2 * 2);
             char maidenheadSubSquareLongitude = (char) ((meridianHemisphere.equals("W") && (longitudeDMS[0] > -180 || longitudeDMS[1] > 0 || longitudeDMS[2] > 0) ? 23 - ((int) longitudeDMS[1] / 5) : longitudeDMS[2] / 5) + 65);
             String altitude = location.hasAltitude() ? location.getAltitude() + "m" : "N/A";
