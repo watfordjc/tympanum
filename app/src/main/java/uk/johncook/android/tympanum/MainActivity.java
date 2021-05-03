@@ -106,23 +106,24 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             char maidenheadFieldLatitude = (char) ((equatorHemisphere.equals("S") && (latitudeDMS[0] > -90 || latitudeDMS[1] > 0 || latitudeDMS[2] > 0) ? (int) latitudeDMS[0] + 89 : (int) latitudeDMS[0] + 90) / 10 + 65);
             int maidenheadSquareLatitude = (int) (equatorHemisphere.equals("S") && (latitudeDMS[0] > -90 || latitudeDMS[1] > 0 || latitudeDMS[2] > 0) ? 9 - (latitudeDMS[0] % 10) : latitudeDMS[0] % 10);
             char maidenheadSubSquareLatitude = (char) ((equatorHemisphere.equals("S") && (latitudeDMS[0] > -90 || latitudeDMS[1] > 0 || latitudeDMS[2] > 0) ? 23 - ((latitudeDMS[1] * 60 + (int) latitudeDMS[2]) / 150) : (latitudeDMS[1] * 60 + (int) latitudeDMS[2]) / 150) + 65);
-            int maidenheadExtendedSquareLatitude = (int) (equatorHemisphere.equals("S") && (latitudeDMS[0] > -90 || latitudeDMS[1] > 0 || latitudeDMS[2] > 0) ? 9 - ((latitudeDMS[1] * 60 + (int) latitudeDMS[2]) % 150 / 15) : ((latitudeDMS[1] * 60 + (int) latitudeDMS[2]) % 150 / 15));
+            int maidenheadExtendedSquareLatitude = (int) (equatorHemisphere.equals("S") && (latitudeDMS[0] > -90 || latitudeDMS[1] > 0 || latitudeDMS[2] > 0) ? 9 - (int) ((latitudeDMS[1] * 60 + (int) latitudeDMS[2]) % 150 / 15) : (int) ((latitudeDMS[1] * 60 + (int) latitudeDMS[2]) % 150 / 15));
             String longitude = Location.convert(location.getLongitude(), Location.FORMAT_SECONDS);
             String meridianHemisphere = longitude.startsWith("-") ? "W" : "E";
             double[] longitudeDMS = GetCoordinates(longitude);
             char maidenheadFieldLongitude = (char) ((meridianHemisphere.equals("W") && (longitudeDMS[0] > -180 || longitudeDMS[1] > 0 || longitudeDMS[2] > 0) ? (int) longitudeDMS[0] + 179 : (int) longitudeDMS[0] + 180 % 360) / 20 + 65);
             int maidenheadSquareLongitude = (int) (meridianHemisphere.equals("W") && (longitudeDMS[0] > -180 || longitudeDMS[1] > 0 || longitudeDMS[2] > 0) ? 9 - (longitudeDMS[0] % 20 / 2 * 2) : longitudeDMS[0] % 20 / 2 * 2);
             char maidenheadSubSquareLongitude = (char) ((meridianHemisphere.equals("W") && (longitudeDMS[0] > -180 || longitudeDMS[1] > 0 || longitudeDMS[2] > 0) ? 23 - ((int) longitudeDMS[1] / 5) : longitudeDMS[2] / 5) + 65);
+            int maidenheadExtendedSquareLongitude = (int) (meridianHemisphere.equals("W") && (longitudeDMS[0] > -180 || longitudeDMS[1] > 0 || longitudeDMS[2] > 0) ? 9 - (int)((longitudeDMS[1] * 60 + (int) longitudeDMS[2]) % 300 / 30) : (int)((longitudeDMS[1] * 60 + (int) longitudeDMS[2]) % 300 / 30));
             String altitude = location.hasAltitude() ? location.getAltitude() + "m" : "N/A";
-            Log.d("Old LOC", "Location: " +
+            Log.d("LOC", "Location: " +
                     (int) latitudeDMS[0] + "° " + (int) latitudeDMS[1] + "' " + latitudeDMS[2] + "\" " + equatorHemisphere + ", " +
                     (int) longitudeDMS[0] + "° " + (int) longitudeDMS[1] + "' " + longitudeDMS[2] + "\" " + meridianHemisphere + ", (" +
                     maidenheadFieldLongitude + maidenheadFieldLatitude +
                     maidenheadSquareLongitude + maidenheadSquareLatitude +
                     maidenheadSubSquareLongitude + maidenheadSubSquareLatitude +
-                    "x" + maidenheadExtendedSquareLatitude + "), " + altitude + ", " + location.getAccuracy());
+                    maidenheadExtendedSquareLongitude + maidenheadExtendedSquareLatitude + "), " + altitude + ", " + location.getAccuracy());
         } else {
-            Log.d("Old LOC", "NULL");
+            Log.d("LOC", "NULL");
         }
     }
 
