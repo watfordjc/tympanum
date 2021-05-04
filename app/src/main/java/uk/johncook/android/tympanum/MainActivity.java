@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
@@ -32,10 +33,13 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+
+import uk.johncook.android.tympanum.ui.home.HomeViewModel;
 
 public class MainActivity extends AppCompatActivity implements LocationListener {
 
@@ -45,6 +49,9 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private static final int REQUEST_CHECK_SETTINGS = 1000;
     private boolean canAccessLocation = false;
     private boolean requestingLocationUpdates = false;
+    private long lastUpdate = -1;
+    private double lastUpdateAccuracy = -1;
+    private HomeViewModel homeViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,16 +66,20 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
+        homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
-//                for (Location location : locationResult.getLocations()) {
-//                    UpdatePosition(location);
-//                }
-                UpdatePosition(locationResult.getLastLocation());
+                long compareTime = System.currentTimeMillis() / 1000;
+                Location location = locationResult.getLastLocation();
+                if (lastUpdate == -1 || compareTime - lastUpdate >= 60 || lastUpdateAccuracy == -1 || location.getAccuracy() < lastUpdateAccuracy) {
+                    lastUpdate = compareTime;
+                    lastUpdateAccuracy = location.getAccuracy();
+                    UpdatePosition(location);
+                }
             }
 
             @Override
@@ -96,6 +107,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     protected void onPause() {
         super.onPause();
         stopLocationUpdates();
+        lastUpdateAccuracy = -1;
     }
 
     private void UpdatePosition(Location location) {
@@ -107,21 +119,46 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             int maidenheadSquareLatitude = (int) (equatorHemisphere.equals("S") && (latitudeDMS[0] > -90 || latitudeDMS[1] > 0 || latitudeDMS[2] > 0) ? 9 - (latitudeDMS[0] % 10) : latitudeDMS[0] % 10);
             char maidenheadSubSquareLatitude = (char) ((equatorHemisphere.equals("S") && (latitudeDMS[0] > -90 || latitudeDMS[1] > 0 || latitudeDMS[2] > 0) ? 23 - ((latitudeDMS[1] * 60 + (int) latitudeDMS[2]) / 150) : (latitudeDMS[1] * 60 + (int) latitudeDMS[2]) / 150) + 65);
             int maidenheadExtendedSquareLatitude = (int) (equatorHemisphere.equals("S") && (latitudeDMS[0] > -90 || latitudeDMS[1] > 0 || latitudeDMS[2] > 0) ? 9 - (int) ((latitudeDMS[1] * 60 + (int) latitudeDMS[2]) % 150 / 15) : (int) ((latitudeDMS[1] * 60 + (int) latitudeDMS[2]) % 150 / 15));
+            char maidenheadExtendedSubSquareLatitude = (char) ((equatorHemisphere.equals("S") && (latitudeDMS[0] > -90 || latitudeDMS[1] > 0 || latitudeDMS[2] > 0) ? 23 - (int) (latitudeDMS[2] % 15 / 0.625) : (int) (latitudeDMS[2] % 15 / 0.625)) + 65);
+            int maidenheadExtendedExtendedSquareLatitude = (int) (equatorHemisphere.equals("S") && (latitudeDMS[0] > -90 || latitudeDMS[1] > 0 || latitudeDMS[2] > 0) ? 9 - (int) (latitudeDMS[2] % 0.625 / 0.0625) : (int) (latitudeDMS[2] % 0.625 / 0.0625));
             String longitude = Location.convert(location.getLongitude(), Location.FORMAT_SECONDS);
             String meridianHemisphere = longitude.startsWith("-") ? "W" : "E";
             double[] longitudeDMS = GetCoordinates(longitude);
             char maidenheadFieldLongitude = (char) ((meridianHemisphere.equals("W") && (longitudeDMS[0] > -180 || longitudeDMS[1] > 0 || longitudeDMS[2] > 0) ? (int) longitudeDMS[0] + 179 : (int) longitudeDMS[0] + 180 % 360) / 20 + 65);
             int maidenheadSquareLongitude = (int) (meridianHemisphere.equals("W") && (longitudeDMS[0] > -180 || longitudeDMS[1] > 0 || longitudeDMS[2] > 0) ? 9 - (longitudeDMS[0] % 20 / 2 * 2) : longitudeDMS[0] % 20 / 2 * 2);
             char maidenheadSubSquareLongitude = (char) ((meridianHemisphere.equals("W") && (longitudeDMS[0] > -180 || longitudeDMS[1] > 0 || longitudeDMS[2] > 0) ? 23 - ((int) longitudeDMS[1] / 5) : longitudeDMS[2] / 5) + 65);
-            int maidenheadExtendedSquareLongitude = (int) (meridianHemisphere.equals("W") && (longitudeDMS[0] > -180 || longitudeDMS[1] > 0 || longitudeDMS[2] > 0) ? 9 - (int)((longitudeDMS[1] * 60 + (int) longitudeDMS[2]) % 300 / 30) : (int)((longitudeDMS[1] * 60 + (int) longitudeDMS[2]) % 300 / 30));
+            int maidenheadExtendedSquareLongitude = (int) (meridianHemisphere.equals("W") && (longitudeDMS[0] > -180 || longitudeDMS[1] > 0 || longitudeDMS[2] > 0) ? 9 - (int) ((longitudeDMS[1] * 60 + (int) longitudeDMS[2]) % 300 / 30) : (int) ((longitudeDMS[1] * 60 + (int) longitudeDMS[2]) % 300 / 30));
+            char maidenheadExtendedSubSquareLongitude = (char) ((meridianHemisphere.equals("W") && (longitudeDMS[0] > -180 || longitudeDMS[1] > 0 || longitudeDMS[2] > 0) ? 23 - (int) (longitudeDMS[2] % 30 / 1.25) : (int) (longitudeDMS[2] % 30 / 1.25)) + 65);
+            int maidenheadExtendedExtendedSquareLongitude = (int) (meridianHemisphere.equals("W") && (longitudeDMS[0] > -180 || longitudeDMS[1] > 0 || longitudeDMS[2] > 0) ? 9 - (int) (longitudeDMS[2] % 1.25 / 0.125) : (int) (longitudeDMS[2] % 1.25 / 0.125));
             String altitude = location.hasAltitude() ? location.getAltitude() + "m" : "N/A";
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append(maidenheadFieldLongitude);
+            stringBuilder.append(maidenheadFieldLatitude);
+            stringBuilder.append(maidenheadSquareLongitude);
+            stringBuilder.append(maidenheadSquareLatitude);
+            stringBuilder.append(maidenheadSubSquareLongitude);
+            stringBuilder.append(maidenheadSubSquareLatitude);
+            stringBuilder.append(maidenheadExtendedSquareLongitude);
+            stringBuilder.append(maidenheadExtendedSquareLatitude);
+            stringBuilder.append(maidenheadExtendedSubSquareLongitude);
+            stringBuilder.append(maidenheadExtendedSubSquareLatitude);
+            stringBuilder.append(maidenheadExtendedExtendedSquareLongitude);
+            stringBuilder.append(maidenheadExtendedExtendedSquareLatitude);
             Log.d("LOC", "Location: " +
                     (int) latitudeDMS[0] + "° " + (int) latitudeDMS[1] + "' " + latitudeDMS[2] + "\" " + equatorHemisphere + ", " +
                     (int) longitudeDMS[0] + "° " + (int) longitudeDMS[1] + "' " + longitudeDMS[2] + "\" " + meridianHemisphere + ", (" +
-                    maidenheadFieldLongitude + maidenheadFieldLatitude +
-                    maidenheadSquareLongitude + maidenheadSquareLatitude +
-                    maidenheadSubSquareLongitude + maidenheadSubSquareLatitude +
-                    maidenheadExtendedSquareLongitude + maidenheadExtendedSquareLatitude + "), " + altitude + ", " + location.getAccuracy());
+                    stringBuilder.toString() + "), " + altitude + ", " + location.getAccuracy());
+            homeViewModel.UpdateCoordinates(stringBuilder.toString(), location.getAccuracy());
+            double altitudeDouble = location.hasAltitude() ? location.getAltitude() : -1;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (location.hasVerticalAccuracy()) {
+                    homeViewModel.UpdateAltitude(altitudeDouble, location.getVerticalAccuracyMeters());
+                } else {
+                    homeViewModel.UpdateAltitude(altitudeDouble, -1);
+                }
+            } else {
+                homeViewModel.UpdateAltitude(altitudeDouble, -1);
+            }
         } else {
             Log.d("LOC", "NULL");
         }
@@ -133,14 +170,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             requestingLocationUpdates = false;
             return;
         }
-        fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-            @Override
-            public void onSuccess(Location location) {
-                if (location != null) {
-                    UpdatePosition(location);
-                }
-            }
-        });
         fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
         requestingLocationUpdates = true;
     }
@@ -178,7 +207,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         locationRequest.setFastestInterval(5000);
         locationRequest.setMaxWaitTime(15000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        locationRequest.setWaitForAccurateLocation(false);
+        locationRequest.setWaitForAccurateLocation(true);
 
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(locationRequest)

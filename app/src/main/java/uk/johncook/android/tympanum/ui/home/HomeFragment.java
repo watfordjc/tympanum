@@ -12,9 +12,6 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
-
 import uk.johncook.android.tympanum.R;
 
 public class HomeFragment extends Fragment {
@@ -24,7 +21,7 @@ public class HomeFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         homeViewModel =
-                new ViewModelProvider(this).get(HomeViewModel.class);
+                new ViewModelProvider(requireActivity()).get(HomeViewModel.class);
         View root = inflater.inflate(R.layout.fragment_home, container, false);
         final TextView textView = root.findViewById(R.id.text_home);
         homeViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
@@ -38,6 +35,27 @@ public class HomeFragment extends Fragment {
             @Override
             public void onChanged(String s) {
                 textViewCoordinates.setText(s);
+            }
+        });
+        final TextView textViewCoordinatesAccuracy = root.findViewById(R.id.text_coordinates_accuracy);
+        homeViewModel.getCoordinatesAccuracy().observe(getViewLifecycleOwner(), new Observer<String>() {
+            @Override
+            public void onChanged(String s) {
+                textViewCoordinatesAccuracy.setText(s);
+            }
+        });
+        final TextView textViewAltitude = root.findViewById(R.id.text_altitude);
+        homeViewModel.getAltitude().observe(getViewLifecycleOwner(), new Observer<String>() {
+            @Override
+            public void onChanged(String s) {
+                textViewAltitude.setText(s);
+            }
+        });
+        final TextView textViewAltitudeAccuracy = root.findViewById(R.id.text_altitude_accuracy);
+        homeViewModel.getAltitudeAccuracy().observe(getViewLifecycleOwner(), new Observer<String>() {
+            @Override
+            public void onChanged(String s) {
+                textViewAltitudeAccuracy.setText(s);
             }
         });
         return root;
