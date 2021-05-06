@@ -53,6 +53,130 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private double lastUpdateAccuracy = -1;
     private HomeViewModel homeViewModel;
 
+    /*
+    This block of constants contain transformations that are licensed BSD-2-Clause. The following required notice is in addition to those in files LICENSE and DATABASE-LICENSE and must be displayed in the software.
+    © Copyright and database rights Ordnance Survey Limited 2016, © Crown copyright and database rights Land & Property Services 2016 and/or © Ordnance Survey Ireland, 2016. All rights reserved.
+    */
+    private static final double GRS80_SEMI_MAJOR_AXIS = 6378137.000; // a
+    private static final double GRS80_SEMI_MINOR_AXIS = 6356752.3141; // b
+    private static final double GRS80_SQUARED_ECCENTRICITY = (Math.pow(GRS80_SEMI_MAJOR_AXIS, 2.0) - Math.pow(GRS80_SEMI_MINOR_AXIS, 2.0)) / Math.pow(GRS80_SEMI_MAJOR_AXIS, 2.0); // e^2
+    private static final double NG_SCALE_FACTOR = 0.9996012717;
+    private static final double NG_TRUE_ORIGIN_LATITUDE = 49.0 / 180 * Math.PI; // 49 degrees N in radians
+    private static final double NG_TRUE_ORIGIN_LONGITUDE = -2.0 / 180 * Math.PI; // 2 degrees W in radians
+    private static final double NG_TRUE_ORIGIN_EASTINGS = 400000;
+    private static final double NG_TRUE_ORIGIN_NORTHINGS = -100000;
+    private static final double AIRY1830_SEMI_MAJOR_AXIS = 6377563.396; // a
+    private static final double AIRY1830_SEMI_MINOR_AXIS = 6356256.909; // b
+    private static final double AIRY1830_SQUARED_ECCENTRICITY = (Math.pow(AIRY1830_SEMI_MAJOR_AXIS, 2.0) - Math.pow(AIRY1830_SEMI_MINOR_AXIS, 2.0)) / Math.pow(AIRY1830_SEMI_MAJOR_AXIS, 2.0); // e^2
+
+    private void ETRS89ToOSGB36Grid() {
+        /*
+        This function contains transformations that are licensed BSD-2-Clause. The following required notice is in addition to those in files LICENSE and DATABASE-LICENSE and must be displayed in the software.
+        © Copyright and database rights Ordnance Survey Limited 2016, © Crown copyright and database rights Land & Property Services 2016 and/or © Ordnance Survey Ireland, 2016. All rights reserved.
+         */
+        double phi = (52.0 + (39.0 / 60) + (28.8282 / 3600)) / 180 * Math.PI; // latitude in radians for worked example in Annex A, Transformations and OSGM15 user guide [v.1.3], Ordnance Survey Limited
+        Log.d("ETRS89", "phi = " + phi);
+        double lambda = (1.0 + (42.0 / 60) + (57.8663 / 3600)) / 180 * Math.PI; //longitude in radians for worked example in Annex A, Transformations and OSGM15 user guide [v.1.3], Ordnance Survey Limited
+        Log.d("ETRS89", "lambda = " + lambda);
+        double altitude = 108.05; // altitude in m for worked example in Annex A, Transformations and OSGM15 user guide [v.1.3], Ordnance Survey Limited
+        Log.d("ETRS89", "© Copyright and database rights Ordnance Survey Limited 2016, © Crown copyright and database rights Land & Property Services 2016 and/or © Ordnance Survey Ireland, 2016. All rights reserved.");
+        double n = (GRS80_SEMI_MAJOR_AXIS - GRS80_SEMI_MINOR_AXIS) / (GRS80_SEMI_MAJOR_AXIS + GRS80_SEMI_MINOR_AXIS);
+        Log.d("ETRS89", "n = " + n);
+        double v = (GRS80_SEMI_MAJOR_AXIS * NG_SCALE_FACTOR) * Math.pow((1 - GRS80_SQUARED_ECCENTRICITY * Math.pow(Math.sin(phi), 2.0)), -0.5);
+        Log.d("ETRS89", "v = " + v);
+        double rho = (GRS80_SEMI_MAJOR_AXIS * NG_SCALE_FACTOR) * (1 - GRS80_SQUARED_ECCENTRICITY) * Math.pow((1 - GRS80_SQUARED_ECCENTRICITY * Math.pow(Math.sin(phi), 2.0)), -1.5);
+        Log.d("ETRS89", "rho = " + rho);
+        double eta_squared = (v / rho) - 1;
+        Log.d("ETRS89", "eta^2 = " + eta_squared);
+        double mu = (GRS80_SEMI_MINOR_AXIS * NG_SCALE_FACTOR) *
+                (((1 + n + (5.0/4 * Math.pow(n, 2.0)) + (5.0/4 * Math.pow(n, 3.0))) * (phi - NG_TRUE_ORIGIN_LATITUDE)) -
+                        (((3 * n) + (3 * Math.pow(n, 2.0)) + (21.0/8 * Math.pow(n, 3.0))) * Math.sin(phi - NG_TRUE_ORIGIN_LATITUDE) * Math.cos(phi + NG_TRUE_ORIGIN_LATITUDE)) +
+                        (((15.0/8 * Math.pow(n, 2.0)) + (15.0/8 * Math.pow(n, 3.0))) * Math.sin(2 * (phi - NG_TRUE_ORIGIN_LATITUDE)) * Math.cos(2 * (phi + NG_TRUE_ORIGIN_LATITUDE))) -
+                        ((35.0/24 * Math.pow(n, 3.0)) * Math.sin(3 * (phi - NG_TRUE_ORIGIN_LATITUDE)) * Math.cos(3 * (phi + NG_TRUE_ORIGIN_LATITUDE))));
+        Log.d("ETRS89", "mu = " + mu);
+        double numeral_i = mu + NG_TRUE_ORIGIN_NORTHINGS;
+        Log.d("ETRS89", "I = " + numeral_i);
+        double numeral_ii = (v / 2) * Math.sin(phi) * Math.cos(phi);
+        Log.d("ETRS89", "II = " + numeral_ii);
+        double numeral_iii = (v / 24) * Math.sin(phi) * (Math.pow(Math.cos(phi), 3.0) * (5 - Math.pow(Math.tan(phi), 2.0) + (9 * eta_squared)));
+        Log.d("ETRS89", "III = " + numeral_iii);
+        double numeral_iiia = (v/720) * Math.sin(phi) * (Math.pow(Math.cos(phi), 5.0) * (61 - (58 * Math.pow(Math.tan(phi), 2.0)) + Math.pow(Math.tan(phi), 4.0)));
+        Log.d("ETRS89", "IIIA = " + numeral_iiia);
+        double numeral_iv = v * Math.cos(phi);
+        Log.d("ETRS89", "IV = " + numeral_iv);
+        double numeral_v = (v/6) * (Math.pow(Math.cos(phi), 3.0) * (v / rho - Math.pow(Math.tan(phi), 2.0)));
+        Log.d("ETRS89", "V = " + numeral_v);
+        double numeral_vi = (v/120) * (Math.pow(Math.cos(phi), 5.0) * (5 - (18 * Math.pow(Math.tan(phi), 2.0)) + Math.pow(Math.tan(phi), 4.0) + (14 * eta_squared) - ((58 * eta_squared) * (Math.pow(Math.tan(phi), 2.0)))));
+        Log.d("ETRS89", "VI = " + numeral_vi);
+        double northings = numeral_i + numeral_ii * (Math.pow(lambda - NG_TRUE_ORIGIN_LONGITUDE, 2.0)) + numeral_iii * (Math.pow(lambda - NG_TRUE_ORIGIN_LONGITUDE, 4.0)) + numeral_iiia * (Math.pow(lambda - NG_TRUE_ORIGIN_LONGITUDE, 6.0));
+        Log.d("ETRS89", "Northings: " + northings + "m");
+        double eastings = NG_TRUE_ORIGIN_EASTINGS + numeral_iv * (lambda - NG_TRUE_ORIGIN_LONGITUDE) + numeral_v * (Math.pow(lambda - NG_TRUE_ORIGIN_LONGITUDE, 3.0)) + numeral_vi * (Math.pow(lambda - NG_TRUE_ORIGIN_LONGITUDE, 5.0));
+        Log.d("ETRS89", "Eastings: " + eastings + "m");
+
+        int east_index = (int)(eastings / 1000);
+        int north_index = (int)(northings / 1000);
+        Log.d("ETRS89", "(east_index,north_index) = (" + east_index + "," + north_index + ")");
+        int south_west_corner_record = (east_index + (north_index * 701) + 1);
+        Log.d("ETRS89", "south_west_corner_record: " + south_west_corner_record);
+        int south_east_corner_record = (east_index + 1 + (north_index * 701) + 1);
+        Log.d("ETRS89", "south_east_corner_record: " + south_east_corner_record);
+        int north_east_corner_record = (east_index + 1 + ((north_index + 1) * 701) + 1);
+        Log.d("ETRS89", "north_east_corner_record: " + north_east_corner_record);
+        int north_west_corner_record = (east_index + ((north_index + 1) * 701) + 1);
+        Log.d("ETRS89", "north_west_corner_record: " + north_west_corner_record);
+        double dx = eastings - (east_index * 1000);
+        double dy = northings - (north_index * 1000);
+        Log.d("ETRS89", "Offset (dx,dy): (" + dx + "," + dy + ")");
+        double t = dx / 1000;
+        Log.d("ETRS89", "t = " + t);
+        double u = dy / 1000;
+        Log.d("ETRS89", "u = " + u);
+    }
+
+    private void OSGB36ToOSGB36Grid() {
+        /*
+        This function contains transformations that are licensed BSD-2-Clause. The following required notice is in addition to those in files LICENSE and DATABASE-LICENSE and must be displayed in the software.
+        © Copyright and database rights Ordnance Survey Limited 2016, © Crown copyright and database rights Land & Property Services 2016 and/or © Ordnance Survey Ireland, 2016. All rights reserved.
+         */
+        double phi = (52.0 + (39.0 / 60) + (27.2531 / 3600)) / 180 * Math.PI; // latitude in radians for worked example in Annex B, Transformations and OSGM15 user guide [v.1.3], Ordnance Survey Limited
+        Log.d("OSGB36", "phi = " + phi);
+        double lambda = (1.0 + (43.0 / 60) + (4.5177 / 3600)) / 180 * Math.PI; //longitude in radians for worked example in Annex B, Transformations and OSGM15 user guide [v.1.3], Ordnance Survey Limited
+        Log.d("OSGB36", "lambda = " + lambda);
+        Log.d("OSGB36", "© Copyright and database rights Ordnance Survey Limited 2016, © Crown copyright and database rights Land & Property Services 2016 and/or © Ordnance Survey Ireland, 2016. All rights reserved.");
+        double n = (AIRY1830_SEMI_MAJOR_AXIS - AIRY1830_SEMI_MINOR_AXIS) / (AIRY1830_SEMI_MAJOR_AXIS + AIRY1830_SEMI_MINOR_AXIS);
+        Log.d("OSGB36", "n = " + n);
+        double v = (AIRY1830_SEMI_MAJOR_AXIS * NG_SCALE_FACTOR) * Math.pow((1 - AIRY1830_SQUARED_ECCENTRICITY * Math.pow(Math.sin(phi), 2.0)), -0.5);
+        Log.d("OSGB36", "v = " + v);
+        double rho = (AIRY1830_SEMI_MAJOR_AXIS * NG_SCALE_FACTOR) * (1 - AIRY1830_SQUARED_ECCENTRICITY) * Math.pow((1 - AIRY1830_SQUARED_ECCENTRICITY * Math.pow(Math.sin(phi), 2.0)), -1.5);
+        Log.d("OSGB36", "rho = " + rho);
+        double eta_squared = (v / rho) - 1;
+        Log.d("OSGB36", "eta^2 = " + eta_squared);
+        double mu = (AIRY1830_SEMI_MINOR_AXIS * NG_SCALE_FACTOR) *
+                (((1 + n + (5.0/4 * Math.pow(n, 2.0)) + (5.0/4 * Math.pow(n, 3.0))) * (phi - NG_TRUE_ORIGIN_LATITUDE)) -
+                (((3 * n) + (3 * Math.pow(n, 2.0)) + (21.0/8 * Math.pow(n, 3.0))) * Math.sin(phi - NG_TRUE_ORIGIN_LATITUDE) * Math.cos(phi + NG_TRUE_ORIGIN_LATITUDE)) +
+                (((15.0/8 * Math.pow(n, 2.0)) + (15.0/8 * Math.pow(n, 3.0))) * Math.sin(2 * (phi - NG_TRUE_ORIGIN_LATITUDE)) * Math.cos(2 * (phi + NG_TRUE_ORIGIN_LATITUDE))) -
+                ((35.0/24 * Math.pow(n, 3.0)) * Math.sin(3 * (phi - NG_TRUE_ORIGIN_LATITUDE)) * Math.cos(3 * (phi + NG_TRUE_ORIGIN_LATITUDE))));
+        Log.d("OSGB36", "mu = " + mu);
+        double numeral_i = mu + NG_TRUE_ORIGIN_NORTHINGS;
+        Log.d("OSGB36", "I = " + numeral_i);
+        double numeral_ii = (v / 2) * Math.sin(phi) * Math.cos(phi);
+        Log.d("OSGB36", "II = " + numeral_ii);
+        double numeral_iii = (v / 24) * Math.sin(phi) * (Math.pow(Math.cos(phi), 3.0) * (5 - Math.pow(Math.tan(phi), 2.0) + (9 * eta_squared)));
+        Log.d("OSGB36", "III = " + numeral_iii);
+        double numeral_iiia = (v/720) * Math.sin(phi) * (Math.pow(Math.cos(phi), 5.0) * (61 - (58 * Math.pow(Math.tan(phi), 2.0)) + Math.pow(Math.tan(phi), 4.0)));
+        Log.d("OSGB36", "IIIA = " + numeral_iiia);
+        double numeral_iv = v * Math.cos(phi);
+        Log.d("OSGB36", "IV = " + numeral_iv);
+        double numeral_v = (v/6) * (Math.pow(Math.cos(phi), 3.0) * (v / rho - Math.pow(Math.tan(phi), 2.0)));
+        Log.d("OSGB36", "V = " + numeral_v);
+        double numeral_vi = (v/120) * (Math.pow(Math.cos(phi), 5.0) * (5 - (18 * Math.pow(Math.tan(phi), 2.0)) + Math.pow(Math.tan(phi), 4.0) + (14 * eta_squared) - ((58 * eta_squared) * (Math.pow(Math.tan(phi), 2.0)))));
+        Log.d("OSGB36", "VI = " + numeral_vi);
+        double northings = numeral_i + numeral_ii * (Math.pow(lambda - NG_TRUE_ORIGIN_LONGITUDE, 2.0)) + numeral_iii * (Math.pow(lambda - NG_TRUE_ORIGIN_LONGITUDE, 4.0)) + numeral_iiia * (Math.pow(lambda - NG_TRUE_ORIGIN_LONGITUDE, 6.0));
+        Log.d("OSGB36", "Northings: " + northings + "m");
+        double eastings = NG_TRUE_ORIGIN_EASTINGS + numeral_iv * (lambda - NG_TRUE_ORIGIN_LONGITUDE) + numeral_v * (Math.pow(lambda - NG_TRUE_ORIGIN_LONGITUDE, 3.0)) + numeral_vi * (Math.pow(lambda - NG_TRUE_ORIGIN_LONGITUDE, 5.0));
+        Log.d("OSGB36", "Eastings: " + eastings + "m");
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -115,6 +239,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             String latitude = Location.convert(location.getLatitude(), Location.FORMAT_SECONDS);
             String equatorHemisphere = latitude.startsWith("-") ? "S" : "N";
             double[] latitudeDMS = GetCoordinates(latitude);
+            ETRS89ToOSGB36Grid();
             char maidenheadFieldLatitude = (char) ((equatorHemisphere.equals("S") && (latitudeDMS[0] > -90 || latitudeDMS[1] > 0 || latitudeDMS[2] > 0) ? (int) latitudeDMS[0] + 89 : (int) latitudeDMS[0] + 90) / 10 + 65);
             int maidenheadSquareLatitude = (int) (equatorHemisphere.equals("S") && (latitudeDMS[0] > -90 || latitudeDMS[1] > 0 || latitudeDMS[2] > 0) ? 9 - (latitudeDMS[0] % 10) : latitudeDMS[0] % 10);
             char maidenheadSubSquareLatitude = (char) ((equatorHemisphere.equals("S") && (latitudeDMS[0] > -90 || latitudeDMS[1] > 0 || latitudeDMS[2] > 0) ? 23 - ((latitudeDMS[1] * 60 + (int) latitudeDMS[2]) / 150) : (latitudeDMS[1] * 60 + (int) latitudeDMS[2]) / 150) + 65);
