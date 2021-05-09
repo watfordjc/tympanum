@@ -24,40 +24,25 @@ public class HomeFragment extends Fragment {
                 new ViewModelProvider(requireActivity()).get(HomeViewModel.class);
         View root = inflater.inflate(R.layout.fragment_home, container, false);
         final TextView textView = root.findViewById(R.id.text_home);
-        homeViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
-            @Override
-            public void onChanged(@Nullable String s) {
-                textView.setText(s);
-            }
-        });
-        final TextView textViewCoordinates = root.findViewById(R.id.text_coordinates);
-        homeViewModel.getCoordinates().observe(getViewLifecycleOwner(), new Observer<String>() {
-            @Override
-            public void onChanged(String s) {
-                textViewCoordinates.setText(s);
-            }
-        });
+        homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+        final TextView textViewWGS84CoordinatesDMS = root.findViewById(R.id.wgs84_coordinates_degrees);
+        homeViewModel.getWGS84CoordinatesDMS().observe(getViewLifecycleOwner(), textViewWGS84CoordinatesDMS::setText);
+        final TextView textViewWGS84CoordinatesDecimal = root.findViewById(R.id.wgs84_coordinates_decimal);
+        homeViewModel.getWGS84CoordinatesDecimal().observe(getViewLifecycleOwner(), textViewWGS84CoordinatesDecimal::setText);
+        final TextView textViewCoordinates = root.findViewById(R.id.iaru_location);
+        homeViewModel.getIARULocation().observe(getViewLifecycleOwner(), textViewCoordinates::setText);
+        final TextView textViewOpenLocationCode = root.findViewById(R.id.olc_text);
+        homeViewModel.getOpenLocationCode().observe(getViewLifecycleOwner(), textViewOpenLocationCode::setText);
+        final TextView textViewOsgb36Location = root.findViewById(R.id.os_grid_unimplemented);
+        homeViewModel.getOsgb36Location().observe(getViewLifecycleOwner(), textViewOsgb36Location::setText);
         final TextView textViewCoordinatesAccuracy = root.findViewById(R.id.text_coordinates_accuracy);
-        homeViewModel.getCoordinatesAccuracy().observe(getViewLifecycleOwner(), new Observer<String>() {
-            @Override
-            public void onChanged(String s) {
-                textViewCoordinatesAccuracy.setText(s);
-            }
-        });
+        homeViewModel.getCoordinatesAccuracy().observe(getViewLifecycleOwner(), textViewCoordinatesAccuracy::setText);
         final TextView textViewAltitude = root.findViewById(R.id.text_altitude);
-        homeViewModel.getAltitude().observe(getViewLifecycleOwner(), new Observer<String>() {
-            @Override
-            public void onChanged(String s) {
-                textViewAltitude.setText(s);
-            }
-        });
+        homeViewModel.getAltitude().observe(getViewLifecycleOwner(), textViewAltitude::setText);
         final TextView textViewAltitudeAccuracy = root.findViewById(R.id.text_altitude_accuracy);
-        homeViewModel.getAltitudeAccuracy().observe(getViewLifecycleOwner(), new Observer<String>() {
-            @Override
-            public void onChanged(String s) {
-                textViewAltitudeAccuracy.setText(s);
-            }
-        });
+        homeViewModel.getAltitudeAccuracy().observe(getViewLifecycleOwner(), textViewAltitudeAccuracy::setText);
+        final TextView textViewGeocoder = root.findViewById(R.id.text_geocoder);
+        homeViewModel.getGeocoder().observe(getViewLifecycleOwner(), textViewGeocoder::setText);
         return root;
     }
 }
